@@ -1,15 +1,18 @@
-# NASA Air Quality Monitor
+# Cleaner, Safer Skies 🌎
 
-A web application for monitoring air quality predictions powered by NASA data, built for the NASA Space Apps Challenge.
+A comprehensive web application for monitoring air quality predictions powered by NASA data, built for the NASA Space Apps Challenge.
 
-## Features
+## ✨ Features
 
-- 🌍 Interactive map using Leaflet.js
-- 📍 Automatic geolocation detection
-- 🔍 Air quality prediction with PM2.5 values
-- 📱 Mobile-friendly responsive design
-- 🎨 Color-coded air quality categories
-- 🚀 Ready for backend integration
+- 🌍 **Interactive Map** - Leaflet.js integration with location markers
+- 📍 **Smart Location Detection** - Automatic geolocation with fallback
+- 🔍 **Real-time Air Quality** - PM2.5 predictions with color-coded categories
+- 📈 **Historical Charts** - Chart.js visualization of 6-hour trends
+- 🔔 **Smart Notifications** - Browser alerts for unhealthy air quality
+- 📱 **Mobile-First Design** - Fully responsive with Tailwind CSS
+- 🎨 **Beautiful UI** - Modern glassmorphism design with smooth animations
+- ⚡ **Easy Backend Toggle** - Switch between mock and real API with one line
+- 🚀 **Production Ready** - Comprehensive error handling and loading states
 
 ## Air Quality Categories
 
@@ -61,9 +64,11 @@ Simply open `frontend/index.html` directly in your web browser. Note that some f
 ```
 NASA-AQI-WEB-APP-/
 ├── frontend/
-│   ├── index.html          # Main HTML file
-│   ├── style.css           # Custom styles
-│   └── script.js           # JavaScript logic
+│   ├── index.html          # Main HTML with Tailwind CSS
+│   ├── style.css           # Custom styles and animations
+│   └── script.js           # Complete JavaScript logic
+├── backend/                # Backend API (coming soon)
+│   └── README.md          # Backend documentation
 ├── package.json            # Node.js dependencies
 └── README.md              # This file
 ```
@@ -81,26 +86,17 @@ NASA-AQI-WEB-APP-/
 The app is ready to connect to your backend API. To integrate:
 
 1. Open `frontend/script.js`
-2. Find the `fetchAirQualityData` function (around line 150)
-3. Replace the mock implementation with:
+2. Find the configuration section at the top (around line 8)
+3. Change `useMock` from `true` to `false`:
 
 ```javascript
-async function fetchAirQualityData(lat, lng) {
-    try {
-        const response = await fetch(`http://localhost:8000/api/predict?lat=${lat}&lon=${lng}`);
-        if (!response.ok) {
-            throw new Error(`HTTP error! status: ${response.status}`);
-        }
-        const data = await response.json();
-        return data;
-    } catch (error) {
-        console.error('API call failed:', error);
-        throw error;
-    }
-}
+const useMock = false; // Set to false when backend is ready
 ```
 
-4. Remove or comment out the mock data generation code
+That's it! The app will automatically switch to using the real API endpoint:
+`http://localhost:8000/api/predict?lat=${lat}&lon=${lng}`
+
+The modular design handles all the complexity for you!
 
 ## API Response Format
 
@@ -124,11 +120,14 @@ The app expects the backend to return JSON in this format:
 ## Technologies Used
 
 - **HTML5**: Semantic markup and structure
-- **CSS3**: Modern styling with gradients and animations
-- **JavaScript (ES6+)**: Modern JavaScript features
-- **Leaflet.js**: Interactive maps
-- **Geolocation API**: Location detection
-- **Fetch API**: HTTP requests
+- **Tailwind CSS**: Utility-first CSS framework
+- **CSS3**: Custom animations and glassmorphism effects
+- **JavaScript (ES6+)**: Modern JavaScript with async/await
+- **Leaflet.js**: Interactive maps with custom markers
+- **Chart.js**: Beautiful data visualization
+- **Geolocation API**: Smart location detection
+- **Notification API**: Browser notifications for alerts
+- **Fetch API**: HTTP requests with error handling
 
 ## Development
 

@@ -1,323 +1,360 @@
-/* NASA Air Quality Monitor - Custom Styles */
+/* Cleaner, Safer Skies - Custom Styles */
+/* Additional styles to complement Tailwind CSS */
 
-/* Reset and Base Styles */
+/* Custom animations */
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(30px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@keyframes pulse {
+    0%, 100% {
+        opacity: 1;
+    }
+    50% {
+        opacity: 0.5;
+    }
+}
+
+@keyframes bounce {
+    0%, 20%, 53%, 80%, 100% {
+        transform: translate3d(0,0,0);
+    }
+    40%, 43% {
+        transform: translate3d(0, -30px, 0);
+    }
+    70% {
+        transform: translate3d(0, -15px, 0);
+    }
+    90% {
+        transform: translate3d(0, -4px, 0);
+    }
+}
+
+/* Custom marker styles for Leaflet */
+.custom-marker {
+    background: transparent !important;
+    border: none !important;
+}
+
+/* Smooth transitions for all interactive elements */
 * {
-    margin: 0;
-    padding: 0;
-    box-sizing: border-box;
-}
-
-body {
-    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-    line-height: 1.6;
-    color: #333;
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-    min-height: 100vh;
-}
-
-.container {
-    max-width: 1200px;
-    margin: 0 auto;
-    padding: 0 20px;
-}
-
-/* Header Styles */
-.header {
-    background: rgba(255, 255, 255, 0.95);
-    backdrop-filter: blur(10px);
-    box-shadow: 0 2px 20px rgba(0, 0, 0, 0.1);
-    padding: 20px 0;
-    text-align: center;
-}
-
-.title {
-    font-size: 2.5rem;
-    font-weight: 700;
-    color: #2c3e50;
-    margin-bottom: 10px;
-}
-
-.subtitle {
-    font-size: 1.1rem;
-    color: #7f8c8d;
-    font-weight: 400;
-}
-
-/* Main Content */
-.main {
-    padding: 30px 0;
-    flex: 1;
-}
-
-/* Control Panel */
-.control-panel {
-    background: rgba(255, 255, 255, 0.95);
-    backdrop-filter: blur(10px);
-    border-radius: 15px;
-    padding: 25px;
-    margin-bottom: 25px;
-    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
-    display: flex;
-    flex-direction: column;
-    gap: 15px;
-    align-items: center;
-}
-
-.btn {
-    padding: 15px 30px;
-    border: none;
-    border-radius: 50px;
-    font-size: 1.1rem;
-    font-weight: 600;
-    cursor: pointer;
     transition: all 0.3s ease;
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    text-decoration: none;
-    min-width: 200px;
-    justify-content: center;
 }
 
-.btn-primary {
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-    color: white;
-    box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+/* Custom scrollbar */
+::-webkit-scrollbar {
+    width: 8px;
 }
 
-.btn-primary:hover {
+::-webkit-scrollbar-track {
+    background: #f1f5f9;
+    border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb {
+    background: #cbd5e1;
+    border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: #94a3b8;
+}
+
+/* Enhanced button hover effects */
+button:hover {
     transform: translateY(-2px);
-    box-shadow: 0 8px 25px rgba(102, 126, 234, 0.6);
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
 }
 
-.btn-primary:active {
+button:active {
     transform: translateY(0);
 }
 
-.btn:disabled {
-    opacity: 0.6;
-    cursor: not-allowed;
-    transform: none !important;
-}
-
-.btn-icon {
-    font-size: 1.2rem;
-}
-
-.location-info {
-    text-align: center;
-    color: #7f8c8d;
-    font-size: 0.9rem;
-}
-
-/* Map Container */
-.map-container {
-    height: 400px;
-    border-radius: 15px;
-    overflow: hidden;
-    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
-    margin-bottom: 25px;
-    background: #f8f9fa;
-}
-
-/* Air Quality Display */
-.air-quality-display {
-    background: rgba(255, 255, 255, 0.95);
-    backdrop-filter: blur(10px);
-    border-radius: 15px;
-    padding: 25px;
-    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
-    transition: all 0.3s ease;
-}
-
-.air-quality-display.hidden {
-    opacity: 0;
-    transform: translateY(20px);
-    pointer-events: none;
-}
-
-.air-quality-display:not(.hidden) {
-    opacity: 1;
-    transform: translateY(0);
-}
-
-.air-quality-card h3 {
-    color: #2c3e50;
-    margin-bottom: 20px;
-    font-size: 1.5rem;
-    text-align: center;
-}
-
-.air-quality-info {
-    display: grid;
-    grid-template-columns: 1fr;
-    gap: 15px;
-}
-
-.metric {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    padding: 15px;
-    background: rgba(102, 126, 234, 0.1);
-    border-radius: 10px;
-    border-left: 4px solid #667eea;
-}
-
-.label {
-    font-weight: 600;
-    color: #2c3e50;
-}
-
-.value {
-    font-weight: 700;
-    color: #2c3e50;
-}
-
-.unit {
-    font-size: 0.9rem;
-    color: #7f8c8d;
-    margin-left: 5px;
-}
-
-/* Air Quality Category Badges */
-.category-badge {
-    padding: 5px 15px;
-    border-radius: 20px;
-    font-size: 0.9rem;
-    font-weight: 600;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-}
-
+/* Custom gradient backgrounds for air quality categories */
 .category-good {
-    background: #2ecc71;
-    color: white;
+    background: linear-gradient(135deg, #10B981, #059669);
 }
 
 .category-moderate {
-    background: #f39c12;
-    color: white;
+    background: linear-gradient(135deg, #F59E0B, #D97706);
 }
 
 .category-unhealthy-sensitive {
-    background: #e67e22;
-    color: white;
+    background: linear-gradient(135deg, #F97316, #EA580C);
 }
 
 .category-unhealthy {
-    background: #e74c3c;
-    color: white;
+    background: linear-gradient(135deg, #EF4444, #DC2626);
 }
 
-/* Footer */
-.footer {
-    background: rgba(255, 255, 255, 0.95);
-    backdrop-filter: blur(10px);
-    text-align: center;
-    padding: 20px 0;
-    color: #7f8c8d;
-    font-size: 0.9rem;
+.category-very-unhealthy {
+    background: linear-gradient(135deg, #8B5CF6, #7C3AED);
 }
 
-/* Responsive Design */
-@media (max-width: 768px) {
-    .container {
-        padding: 0 15px;
-    }
-    
-    .title {
-        font-size: 2rem;
-    }
-    
-    .subtitle {
-        font-size: 1rem;
-    }
-    
-    .control-panel {
-        padding: 20px;
-    }
-    
-    .btn {
-        padding: 12px 25px;
-        font-size: 1rem;
-        min-width: 180px;
-    }
-    
-    .map-container {
-        height: 300px;
-    }
-    
-    .air-quality-info {
-        gap: 10px;
-    }
-    
-    .metric {
-        padding: 12px;
-        flex-direction: column;
-        align-items: flex-start;
-        gap: 5px;
-    }
-    
-    .metric .value {
-        align-self: flex-end;
-    }
+.category-hazardous {
+    background: linear-gradient(135deg, #7C2D12, #991B1B);
 }
 
-@media (max-width: 480px) {
-    .title {
-        font-size: 1.8rem;
-    }
-    
-    .btn {
-        padding: 10px 20px;
-        font-size: 0.9rem;
-        min-width: 160px;
-    }
-    
-    .map-container {
-        height: 250px;
-    }
-    
-    .air-quality-display {
-        padding: 20px;
-    }
+/* Enhanced card shadows */
+.bg-white\/90 {
+    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
 }
 
-/* Loading Animation */
-.loading {
-    display: inline-block;
-    width: 20px;
-    height: 20px;
-    border: 3px solid rgba(255, 255, 255, 0.3);
-    border-radius: 50%;
-    border-top-color: #fff;
-    animation: spin 1s ease-in-out infinite;
+/* Custom loading spinner */
+.loading-spinner {
+    animation: spin 1s linear infinite;
 }
 
 @keyframes spin {
-    to { transform: rotate(360deg); }
+    from {
+        transform: rotate(0deg);
+    }
+    to {
+        transform: rotate(360deg);
+    }
 }
 
-/* Map Marker Styles */
-.air-quality-marker {
-    border-radius: 50%;
-    border: 3px solid white;
-    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
+/* Enhanced map container */
+#map {
+    border-radius: 12px;
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+    border: 2px solid rgba(255, 255, 255, 0.2);
 }
 
-.marker-good {
-    background: #2ecc71;
+/* Custom chart container */
+#airQualityChart {
+    border-radius: 8px;
 }
 
-.marker-moderate {
-    background: #f39c12;
+/* Enhanced typography */
+h1, h2, h3 {
+    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
-.marker-unhealthy-sensitive {
-    background: #e67e22;
+/* Custom notification styles */
+.notification {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    background: white;
+    border-radius: 12px;
+    padding: 16px;
+    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+    border-left: 4px solid #EF4444;
+    z-index: 1000;
+    animation: slideInRight 0.3s ease-out;
 }
 
-.marker-unhealthy {
-    background: #e74c3c;
+@keyframes slideInRight {
+    from {
+        transform: translateX(100%);
+        opacity: 0;
+    }
+    to {
+        transform: translateX(0);
+        opacity: 1;
+    }
+}
+
+/* Enhanced mobile responsiveness */
+@media (max-width: 768px) {
+    .container {
+        padding-left: 1rem;
+        padding-right: 1rem;
+    }
+    
+    h1 {
+        font-size: 2rem;
+    }
+    
+    .grid-cols-1.md\\:grid-cols-3 {
+        grid-template-columns: 1fr;
+        gap: 1rem;
+    }
+    
+    #map {
+        height: 200px;
+    }
+    
+    .flex-col.md\\:flex-row {
+        flex-direction: column;
+        align-items: stretch;
+    }
+}
+
+/* Custom focus states for accessibility */
+button:focus,
+input:focus {
+    outline: 2px solid #3B82F6;
+    outline-offset: 2px;
+}
+
+/* Enhanced backdrop blur effects */
+.backdrop-blur-md {
+    backdrop-filter: blur(12px);
+}
+
+.backdrop-blur-sm {
+    backdrop-filter: blur(4px);
+}
+
+/* Custom gradient text */
+.gradient-text {
+    background: linear-gradient(135deg, #3B82F6, #8B5CF6);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+
+/* Enhanced hover effects for cards */
+.bg-white\/90:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.15);
+}
+
+/* Custom animation for data display */
+#dataDisplay {
+    animation: fadeInUp 0.6s ease-out;
+}
+
+/* Enhanced button styles */
+.btn-primary {
+    background: linear-gradient(135deg, #3B82F6, #1D4ED8);
+    box-shadow: 0 4px 14px 0 rgba(59, 130, 246, 0.4);
+}
+
+.btn-primary:hover {
+    background: linear-gradient(135deg, #2563EB, #1E40AF);
+    box-shadow: 0 6px 20px 0 rgba(59, 130, 246, 0.6);
+}
+
+/* Custom chart styling */
+.chart-container {
+    position: relative;
+    height: 300px;
+    width: 100%;
+}
+
+/* Enhanced loading states */
+.loading-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(255, 255, 255, 0.9);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 12px;
+    z-index: 10;
+}
+
+/* Custom tooltip styles */
+.tooltip {
+    position: relative;
+    display: inline-block;
+}
+
+.tooltip .tooltiptext {
+    visibility: hidden;
+    width: 200px;
+    background-color: #1F2937;
+    color: #fff;
+    text-align: center;
+    border-radius: 6px;
+    padding: 8px;
+    position: absolute;
+    z-index: 1;
+    bottom: 125%;
+    left: 50%;
+    margin-left: -100px;
+    opacity: 0;
+    transition: opacity 0.3s;
+    font-size: 14px;
+}
+
+.tooltip:hover .tooltiptext {
+    visibility: visible;
+    opacity: 1;
+}
+
+/* Enhanced accessibility */
+.sr-only {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border: 0;
+}
+
+/* Custom selection colors */
+::selection {
+    background-color: #3B82F6;
+    color: white;
+}
+
+::-moz-selection {
+    background-color: #3B82F6;
+    color: white;
+}
+
+/* Enhanced focus indicators */
+.focus\:ring-2:focus {
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.5);
+}
+
+/* Custom animation delays for staggered effects */
+.animate-delay-100 {
+    animation-delay: 0.1s;
+}
+
+.animate-delay-200 {
+    animation-delay: 0.2s;
+}
+
+.animate-delay-300 {
+    animation-delay: 0.3s;
+}
+
+/* Enhanced glass morphism effect */
+.glass {
+    background: rgba(255, 255, 255, 0.25);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.18);
+}
+
+/* Custom error states */
+.error {
+    border-color: #EF4444;
+    background-color: #FEF2F2;
+}
+
+.error-message {
+    color: #DC2626;
+    font-size: 0.875rem;
+    margin-top: 0.25rem;
+}
+
+/* Enhanced success states */
+.success {
+    border-color: #10B981;
+    background-color: #F0FDF4;
+}
+
+.success-message {
+    color: #059669;
+    font-size: 0.875rem;
+    margin-top: 0.25rem;
 }
