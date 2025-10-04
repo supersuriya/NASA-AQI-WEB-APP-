@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cleaner, Safer Skies - NASA Air Quality Monitor</title>
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    
+    <!-- Leaflet CSS -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" 
+          integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" 
+          crossorigin=""/>
+    
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="style.css">
+</head>
+<body class="bg-gradient-to-br from-blue-50 to-indigo-100 min-h-screen">
+    <!-- Header -->
+    <header class="bg-white/80 backdrop-blur-md shadow-lg border-b border-white/20">
+        <div class="container mx-auto px-4 py-6">
+            <div class="text-center">
+                <h1 class="text-4xl md:text-5xl font-bold text-gray-800 mb-2">
+                    Cleaner, Safer Skies 🌎
+                </h1>
+                <p class="text-lg text-gray-600">
+                    Real-time air quality monitoring powered by NASA data
+                </p>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="container mx-auto px-4 py-8">
+        <!-- Control Panel -->
+        <div class="bg-white/90 backdrop-blur-sm rounded-2xl shadow-xl p-6 mb-8 border border-white/20">
+            <div class="flex flex-col md:flex-row items-center justify-between gap-4">
+                <div class="flex items-center gap-4">
+                    <button id="useMyLocation" class="bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700 text-white px-6 py-3 rounded-xl font-semibold transition-all duration-300 transform hover:scale-105 shadow-lg flex items-center gap-2">
+                        <span class="text-xl">📍</span>
+                        Use My Location
+                    </button>
+                    <div id="locationStatus" class="text-sm text-gray-600">
+                        Click to get your location
+                    </div>
+                </div>
+                
+                <!-- Loading Spinner -->
+                <div id="loadingSpinner" class="hidden flex items-center gap-2 text-blue-600">
+                    <div class="animate-spin rounded-full h-5 w-5 border-b-2 border-blue-600"></div>
+                    <span>Fetching data...</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Data Display Panel -->
+        <div id="dataDisplay" class="hidden bg-white/90 backdrop-blur-sm rounded-2xl shadow-xl p-6 mb-8 border border-white/20">
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <!-- PM2.5 Value -->
+                <div class="text-center p-4 bg-gradient-to-br from-blue-50 to-indigo-50 rounded-xl">
+                    <div class="text-3xl font-bold text-gray-800 mb-1" id="pm25Value">--</div>
+                    <div class="text-sm text-gray-600">PM2.5 (μg/m³)</div>
+                </div>
+                
+                <!-- Air Quality Category -->
+                <div class="text-center p-4 bg-gradient-to-br from-green-50 to-emerald-50 rounded-xl" id="categoryCard">
+                    <div class="text-2xl mb-2" id="categoryIcon">🌿</div>
+                    <div class="text-lg font-semibold text-gray-800" id="airQualityCategory">--</div>
+                    <div class="text-sm text-gray-600">Air Quality</div>
+                </div>
+                
+                <!-- Data Source -->
+                <div class="text-center p-4 bg-gradient-to-br from-purple-50 to-pink-50 rounded-xl">
+                    <div class="text-2xl mb-2">📡</div>
+                    <div class="text-lg font-semibold text-gray-800" id="dataSource">--</div>
+                    <div class="text-sm text-gray-600">Data Source</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Chart Section -->
+        <div class="bg-white/90 backdrop-blur-sm rounded-2xl shadow-xl p-6 mb-8 border border-white/20">
+            <h3 class="text-xl font-semibold text-gray-800 mb-4 text-center">
+                📈 Air Quality Trends (Last 6 Hours)
+            </h3>
+            <div class="relative h-64">
+                <canvas id="airQualityChart"></canvas>
+            </div>
+        </div>
+
+        <!-- Map Section -->
+        <div class="bg-white/90 backdrop-blur-sm rounded-2xl shadow-xl p-6 border border-white/20">
+            <h3 class="text-xl font-semibold text-gray-800 mb-4 text-center">
+                🗺️ Location Map
+            </h3>
+            <div id="map" class="h-64 md:h-80 rounded-xl overflow-hidden"></div>
+        </div>
+    </main>
+
+    <!-- Footer -->
+    <footer class="bg-white/80 backdrop-blur-md border-t border-white/20 mt-12">
+        <div class="container mx-auto px-4 py-6 text-center">
+            <p class="text-gray-600">
+                &copy; 2024 NASA Space Apps Challenge - Cleaner, Safer Skies Project
+            </p>
+        </div>
+    </footer>
+
+    <!-- Leaflet JavaScript -->
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" 
+            integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" 
+            crossorigin=""></script>
+    
+    <!-- Custom JavaScript -->
+    <script src="script.js"></script>
+</body>
+</html>
