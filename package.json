@@ -1,0 +1,33 @@
+{
+  "name": "nasa-air-quality-monitor",
+  "version": "1.0.0",
+  "description": "NASA Space Apps Air Quality Monitoring Web Application",
+  "main": "frontend/index.html",
+  "scripts": {
+    "start": "npx http-server frontend -p 3000 -o",
+    "dev": "npx http-server frontend -p 3000 -o -c-1",
+    "build": "echo 'No build process needed for static files'",
+    "test": "echo 'No tests specified'"
+  },
+  "keywords": [
+    "nasa",
+    "air-quality",
+    "leaflet",
+    "geolocation",
+    "space-apps"
+  ],
+  "author": "NASA Space Apps Team",
+  "license": "MIT",
+  "devDependencies": {
+    "http-server": "^14.1.1"
+  },
+  "dependencies": {},
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/your-username/nasa-air-quality-monitor.git"
+  },
+  "bugs": {
+    "url": "https://github.com/your-username/nasa-air-quality-monitor/issues"
+  },
+  "homepage": "https://github.com/your-username/nasa-air-quality-monitor#readme"
+}

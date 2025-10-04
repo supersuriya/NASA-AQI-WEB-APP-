@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NASA Air Quality Monitor</title>
+    
+    <!-- Leaflet CSS -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" 
+          integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" 
+          crossorigin=""/>
+    
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <!-- Header -->
+    <header class="header">
+        <div class="container">
+            <h1 class="title">🌍 NASA Air Quality Monitor</h1>
+            <p class="subtitle">Real-time air quality predictions powered by NASA data</p>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="main">
+        <div class="container">
+            <!-- Control Panel -->
+            <div class="control-panel">
+                <button id="checkAirQuality" class="btn btn-primary">
+                    <span class="btn-icon">🔍</span>
+                    Check Air Quality
+                </button>
+                <div class="location-info">
+                    <span id="locationStatus">Getting your location...</span>
+                </div>
+            </div>
+
+            <!-- Map Container -->
+            <div id="map" class="map-container"></div>
+
+            <!-- Air Quality Display -->
+            <div id="airQualityDisplay" class="air-quality-display hidden">
+                <div class="air-quality-card">
+                    <h3>Air Quality Results</h3>
+                    <div class="air-quality-info">
+                        <div class="metric">
+                            <span class="label">PM2.5:</span>
+                            <span id="pm25Value" class="value">--</span>
+                            <span class="unit">μg/m³</span>
+                        </div>
+                        <div class="metric">
+                            <span class="label">Category:</span>
+                            <span id="airQualityCategory" class="value category-badge">--</span>
+                        </div>
+                        <div class="metric">
+                            <span class="label">Source:</span>
+                            <span id="dataSource" class="value">--</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="container">
+            <p>&copy; 2024 NASA Space Apps Challenge - Air Quality Project</p>
+        </div>
+    </footer>
+
+    <!-- Leaflet JavaScript -->
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" 
+            integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" 
+            crossorigin=""></script>
+    
+    <!-- Custom JavaScript -->
+    <script src="script.js"></script>
+</body>
+</html>
