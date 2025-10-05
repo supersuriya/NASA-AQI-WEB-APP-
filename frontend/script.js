@@ -26,42 +26,36 @@ const DEFAULT_LOCATION = {
     lng: -74.0060
 };
 
-// Air quality categories with colors and icons
+// Air quality categories with colors
 const AIR_QUALITY_CATEGORIES = {
     'Good': {
         color: '#10B981',
         bgColor: 'from-green-50 to-emerald-50',
-        icon: '🌿',
         description: 'Air quality is satisfactory'
     },
     'Moderate': {
         color: '#F59E0B',
         bgColor: 'from-yellow-50 to-amber-50',
-        icon: '😊',
         description: 'Air quality is acceptable'
     },
     'Unhealthy for Sensitive Groups': {
         color: '#F97316',
         bgColor: 'from-orange-50 to-red-50',
-        icon: '😷',
         description: 'Sensitive groups may experience health effects'
     },
     'Unhealthy': {
         color: '#EF4444',
         bgColor: 'from-red-50 to-pink-50',
-        icon: '🔥',
         description: 'Everyone may experience health effects'
     },
     'Very Unhealthy': {
         color: '#8B5CF6',
         bgColor: 'from-purple-50 to-indigo-50',
-        icon: '💀',
         description: 'Health warnings of emergency conditions'
     },
     'Hazardous': {
         color: '#7C2D12',
         bgColor: 'from-red-100 to-red-200',
-        icon: '☠️',
         description: 'Health alert: everyone may experience serious health effects'
     }
 };
@@ -94,10 +88,28 @@ async function initializeApp() {
         // Load available cities from API
         await loadAvailableCities();
         
-        // Load available parameters for default city
-        await loadAvailableParameters();
+        // Auto-load data for Los Angeles with O3 parameter
+        const defaultCity = 'Los Angeles';
+        const defaultParameter = 'O3';
         
-        console.log('App initialized successfully');
+        currentCity = defaultCity;
+        currentParameter = defaultParameter;
+        
+        // Set the dropdown values
+        const citySelect = document.getElementById('citySelect');
+        const parameterSelect = document.getElementById('parameterSelect');
+        
+        if (citySelect) {
+            citySelect.value = defaultCity;
+        }
+        if (parameterSelect) {
+            parameterSelect.value = defaultParameter;
+        }
+        
+        // Auto-load data
+        await getAirQualityData(defaultCity, defaultParameter, currentHoursAhead);
+        
+        console.log('App initialized successfully with default data');
     } catch (error) {
         console.error('Error initializing app:', error);
         showError('Failed to initialize application. Please refresh the page.');
@@ -443,7 +455,14 @@ async function handleCityChange(event) {
     const selectedCity = event.target.value;
     if (selectedCity) {
         currentCity = selectedCity;
+        
+        // Update status
+        const statusElement = document.getElementById('locationStatus');
+        statusElement.textContent = `Loading data for ${selectedCity}...`;
+        
         await loadAvailableParameters(selectedCity);
+        
+        // Auto-fetch data with the current parameter
         await getAirQualityData(selectedCity, currentParameter, currentHoursAhead);
     }
 }
@@ -484,9 +503,9 @@ function addLocationMarker() {
     // Add new location marker
     const locationIcon = L.divIcon({
         className: 'custom-marker',
-        html: '<div style="width: 24px; height: 24px; background: #3B82F6; border-radius: 50%; border: 3px solid white; box-shadow: 0 2px 10px rgba(0,0,0,0.3); display: flex; align-items: center; justify-content: center; color: white; font-weight: bold; font-size: 12px;">📍</div>',
-        iconSize: [30, 30],
-        iconAnchor: [15, 15]
+        html: '<div style="width: 20px; height: 20px; background: #3B82F6; border-radius: 50%; border: 3px solid white; box-shadow: 0 2px 10px rgba(0,0,0,0.3);"></div>',
+        iconSize: [26, 26],
+        iconAnchor: [13, 13]
     });
     
     const marker = L.marker([currentLocation.lat, currentLocation.lng], {
@@ -572,26 +591,16 @@ function displayAirQualityResults(data) {
     const category = getAirQualityCategory(data.parameter, currentValue);
     document.getElementById('airQualityCategory').textContent = category;
     
-    // Update data sources
-    const sources = [];
-    // Since we're using sample data, show the data source from model_metadata
+    // Update data sources - show the actual data source from API
     if (data.model_metadata && data.model_metadata.data_source) {
-        sources.push(data.model_metadata.data_source);
+        document.getElementById('dataSources').textContent = data.model_metadata.data_source;
     } else {
-        sources.push('Sample Data');
+        document.getElementById('dataSources').textContent = 'Unknown';
     }
     
-    document.getElementById('dataSources').textContent = sources.join(', ');
-    
-    // Update model accuracy
-    const accuracy = data.model_metadata && data.model_metadata.accuracy;
-    if (accuracy && accuracy !== 'N/A - Sample Data') {
-        // If accuracy is a number, convert to percentage
-        if (typeof accuracy === 'number') {
-            document.getElementById('modelAccuracy').textContent = `${(accuracy * 100).toFixed(1)}%`;
-        } else {
-            document.getElementById('modelAccuracy').textContent = accuracy;
-        }
+    // Update model type
+    if (data.model_metadata && data.model_metadata.model_type) {
+        document.getElementById('modelAccuracy').textContent = data.model_metadata.model_type;
     } else {
         document.getElementById('modelAccuracy').textContent = 'N/A';
     }
@@ -641,16 +650,12 @@ function getAirQualityCategory(parameter, value) {
  */
 function updateCategoryStyling(category) {
     const categoryCard = document.getElementById('categoryCard');
-    const categoryIcon = document.getElementById('categoryIcon');
     
     const categoryInfo = AIR_QUALITY_CATEGORIES[category];
     
     if (categoryInfo) {
         // Update background color
         categoryCard.className = `text-center p-4 bg-gradient-to-br ${categoryInfo.bgColor} rounded-xl`;
-        
-        // Update icon
-        categoryIcon.textContent = categoryInfo.icon;
     }
 }
 
@@ -907,13 +912,6 @@ function showAirQualityNotification(data, category, value) {
  */
 function getCategoryColor(category) {
     return AIR_QUALITY_CATEGORIES[category]?.color || '#6B7280';
-}
-
-/**
- * Get category icon
- */
-function getCategoryIcon(category) {
-    return AIR_QUALITY_CATEGORIES[category]?.icon || '❓';
 }
 
 // Export functions for testing (if needed)

@@ -43,3 +43,8 @@ redis==5.0.1
 
 # Optional: Database migrations
 alembic==1.13.1
+
+# NASA Earthdata access
+earthaccess==0.8.2
+xarray==2023.12.0
+netCDF4==1.6.5

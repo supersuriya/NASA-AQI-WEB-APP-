@@ -25,10 +25,10 @@
         <div class="container mx-auto px-4 py-6">
             <div class="text-center">
                 <h1 class="text-4xl md:text-5xl font-bold text-gray-800 mb-2">
-                    Cleaner, Safer Skies 🌎
+                    Cleaner, Safer Skies
                 </h1>
                 <p class="text-lg text-gray-600">
-                    Real-time air quality monitoring powered by NASA data
+                    Real-time air quality monitoring powered by NASA AirNow Data
                 </p>
             </div>
         </div>
@@ -42,7 +42,6 @@
                 <!-- Location Controls -->
                 <div class="flex flex-col sm:flex-row items-center gap-4">
                     <button id="useMyLocation" class="bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700 text-white px-6 py-3 rounded-xl font-semibold transition-all duration-300 transform hover:scale-105 shadow-lg flex items-center gap-2">
-                        <span class="text-xl">📍</span>
                         Use My Location
                     </button>
                     
@@ -98,23 +97,20 @@
                 
                 <!-- Air Quality Category -->
                 <div class="text-center p-4 bg-gradient-to-br from-green-50 to-emerald-50 rounded-xl" id="categoryCard">
-                    <div class="text-2xl mb-2" id="categoryIcon">🌿</div>
                     <div class="text-lg font-semibold text-gray-800" id="airQualityCategory">--</div>
                     <div class="text-sm text-gray-600">Air Quality</div>
                 </div>
                 
                 <!-- Data Sources -->
                 <div class="text-center p-4 bg-gradient-to-br from-purple-50 to-pink-50 rounded-xl">
-                    <div class="text-2xl mb-2">📡</div>
                     <div class="text-lg font-semibold text-gray-800" id="dataSources">--</div>
                     <div class="text-sm text-gray-600">Data Sources</div>
                 </div>
                 
                 <!-- Model Accuracy -->
                 <div class="text-center p-4 bg-gradient-to-br from-yellow-50 to-orange-50 rounded-xl">
-                    <div class="text-2xl mb-2">🎯</div>
                     <div class="text-lg font-semibold text-gray-800" id="modelAccuracy">--</div>
-                    <div class="text-sm text-gray-600">Model Accuracy</div>
+                    <div class="text-sm text-gray-600">Model Type</div>
                 </div>
             </div>
         </div>
@@ -122,7 +118,7 @@
         <!-- Forecast Chart Section -->
         <div class="bg-white/90 backdrop-blur-sm rounded-2xl shadow-xl p-6 mb-8 border border-white/20">
             <h3 class="text-xl font-semibold text-gray-800 mb-4 text-center">
-                📈 Air Quality Forecast
+                Air Quality Forecast
             </h3>
             <div class="relative h-64">
                 <canvas id="forecastChart"></canvas>
@@ -132,7 +128,7 @@
         <!-- Confidence Intervals Section -->
         <div class="bg-white/90 backdrop-blur-sm rounded-2xl shadow-xl p-6 mb-8 border border-white/20">
             <h3 class="text-xl font-semibold text-gray-800 mb-4 text-center">
-                📊 Prediction Confidence Intervals
+                Prediction Confidence Intervals
             </h3>
             <div class="relative h-64">
                 <canvas id="confidenceChart"></canvas>
@@ -142,7 +138,7 @@
         <!-- Map Section -->
         <div class="bg-white/90 backdrop-blur-sm rounded-2xl shadow-xl p-6 border border-white/20">
             <h3 class="text-xl font-semibold text-gray-800 mb-4 text-center">
-                🗺️ Location Map
+                Location Map
             </h3>
             <div id="map" class="h-64 md:h-80 rounded-xl overflow-hidden"></div>
         </div>

@@ -13,7 +13,29 @@ import logging
 import time
 import earthaccess
 from sqlalchemy.orm import Session
-from database import Measurement, Weather
+from models import Measurement
+from database import Base, engine
+
+# Create Weather model if it doesn't exist
+from sqlalchemy import Column, Integer, String, Float, DateTime
+from sqlalchemy.sql import func
+
+class Weather(Base):
+    __tablename__ = "weather"
+    id = Column(Integer, primary_key=True, index=True)
+    city = Column(String(100), nullable=False, index=True)
+    temperature = Column(Float)
+    humidity = Column(Float)
+    wind_speed = Column(Float)
+    wind_direction = Column(Float)
+    precipitation = Column(Float)
+    pressure = Column(Float)
+    datetime_utc = Column(DateTime, nullable=False, index=True)
+    source = Column(String(20), nullable=False)
+    latitude = Column(Float)
+    longitude = Column(Float)
+    raw_data = Column(String)
+    created_at = Column(DateTime, default=func.now())
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)

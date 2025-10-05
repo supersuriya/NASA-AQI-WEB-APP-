@@ -190,8 +190,8 @@ class AirQualityForecaster:
             )
         ).order_by(Measurement.date_utc).all()
         
-        if len(recent_data) < 24:  # Need at least 24 hours of recent data
-            raise ValueError(f"Insufficient recent data for prediction. Found {len(recent_data)} records, need at least 24.")
+        if len(recent_data) < 12:  # Need at least 12 hours of recent data
+            raise ValueError(f"Insufficient recent data for prediction. Found {len(recent_data)} records, need at least 12.")
         
         # Convert to DataFrame
         data = []
