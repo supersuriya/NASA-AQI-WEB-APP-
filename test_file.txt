@@ -1,3 +1,0 @@
-TS is a Test File
-
-hello

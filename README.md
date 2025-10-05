@@ -1,157 +1,340 @@
-# Cleaner, Safer Skies 🌎
+# Air Quality Data Ingestion API
 
-A comprehensive web application for monitoring air quality predictions powered by NASA data, built for the NASA Space Apps Challenge.
+A FastAPI backend module that fetches and ingests data from multiple APIs to prepare input for ML models predicting air quality. This system integrates NASA TOLNet, OpenAQ, and weather APIs to provide comprehensive air quality data for North American cities.
 
-## ✨ Features
+## 🚀 Features
 
-- 🌍 **Interactive Map** - Leaflet.js integration with location markers
-- 📍 **Smart Location Detection** - Automatic geolocation with fallback
-- 🔍 **Real-time Air Quality** - PM2.5 predictions with color-coded categories
-- 📈 **Historical Charts** - Chart.js visualization of 6-hour trends
-- 🔔 **Smart Notifications** - Browser alerts for unhealthy air quality
-- 📱 **Mobile-First Design** - Fully responsive with Tailwind CSS
-- 🎨 **Beautiful UI** - Modern glassmorphism design with smooth animations
-- ⚡ **Easy Backend Toggle** - Switch between mock and real API with one line
-- 🚀 **Production Ready** - Comprehensive error handling and loading states
+- **Multi-Source Data Ingestion**: Fetches data from NASA TOLNet, OpenAQ, and weather APIs
+- **Real-Time Data Processing**: Normalizes and stores data in SQLite database
+- **ML-Ready Output**: Provides normalized JSON data ready for machine learning models
+- **RESTful API**: Clean FastAPI endpoints for data access and configuration
+- **Error Handling**: Robust error handling and logging throughout
+- **Configurable Cities**: Easy city configuration and management
 
-## Air Quality Categories
+## 📊 Data Sources
 
-- **Good** (Green): PM2.5 < 12 μg/m³
-- **Moderate** (Yellow): PM2.5 12-35 μg/m³
-- **Unhealthy for Sensitive Groups** (Orange): PM2.5 35-55 μg/m³
-- **Unhealthy** (Red): PM2.5 > 55 μg/m³
+### NASA TOLNet API
+- **Base URL**: `https://tolnet.larc.nasa.gov/api/`
+- **Authentication**: Earthdata Login (username/password)
+- **Data**: Ozone (O3) measurements from ground stations
+- **Coverage**: North American cities
 
-## Quick Start
+### OpenAQ API
+- **Base URL**: `https://api.openaq.org/v2/`
+- **Authentication**: None required (public API)
+- **Data**: NO₂, PM2.5, PM10, O₃, SO₂, CO measurements
+- **Coverage**: Global ground station network
 
-### Option 1: Using Python (Recommended - No npm required)
+### Weather APIs
+- **NASA Daymet**: Daily weather data
+- **MERRA-2**: Atmospheric reanalysis data
+- **Data**: Temperature, humidity, wind speed/direction, precipitation, pressure
 
-1. Navigate to the project directory:
+## 🛠️ Installation
+
+1. **Clone the repository**:
    ```bash
-   cd "C:\Users\surap\OneDrive\Documents\hackathon\NASA-AQI-WEB-APP-"
+   git clone <repository-url>
+   cd air-quality-data-ingestion
    ```
 
-2. Start a simple HTTP server:
+2. **Create virtual environment**:
    ```bash
-   # Using Python 3
-   python -m http.server 3000
-   
-   # Or using Python 2
-   python -m SimpleHTTPServer 3000
+   python -m venv venv
+   source venv/bin/activate  # On Windows: venv\Scripts\activate
    ```
 
-3. Open your browser and go to: `http://localhost:3000/frontend/`
-
-### Option 2: Using Node.js (if you have npm installed)
-
-1. Install dependencies:
+3. **Install dependencies**:
    ```bash
-   npm install
+   pip install -r requirements.txt
    ```
 
-2. Start the development server:
-   ```bash
-   npm start
+4. **Set up environment variables**:
+   Create a `.env` file with your NASA Earthdata credentials:
+   ```env
+   EARTHDATA_USERNAME=your_username
+   EARTHDATA_PASSWORD=your_password
+   DATABASE_URL=sqlite:///./air_quality_data.db
    ```
 
-3. The app will automatically open in your browser at `http://localhost:3000`
+5. **Initialize the database**:
+   ```bash
+   python main.py
+   ```
 
-### Option 3: Direct File Opening
+## 🚀 Quick Start
 
-Simply open `frontend/index.html` directly in your web browser. Note that some features (like geolocation) may not work properly when opening files directly.
+1. **Start the API server**:
+   ```bash
+   python main.py
+   ```
 
-## Project Structure
+2. **Test the API**:
+   ```bash
+   python test_api.py
+   ```
 
+3. **Access the API documentation**:
+   - Open your browser to `http://localhost:8000/docs`
+   - Interactive API documentation with Swagger UI
+
+## 📡 API Endpoints
+
+### Core Endpoints
+
+- **`GET /`** - API information and available endpoints
+- **`GET /health`** - Health check endpoint
+- **`GET /ingest/data`** - Fetch and store data from all APIs
+- **`GET /data/preview`** - Preview recent database records
+- **`GET /data/normalized`** - Get ML-ready normalized data
+- **`GET /data/stats`** - Data statistics and monitoring
+
+### Configuration Endpoints
+
+- **`GET /config/cities`** - Get all configured cities
+- **`POST /config/cities`** - Add or update city configuration
+
+## 🗄️ Database Schema
+
+### Measurements Table
+```sql
+CREATE TABLE measurements (
+    id INTEGER PRIMARY KEY,
+    city VARCHAR(100) NOT NULL,
+    parameter VARCHAR(50) NOT NULL,  -- NO2, PM2.5, O3, etc.
+    value FLOAT NOT NULL,
+    unit VARCHAR(20) NOT NULL,       -- µg/m³, ppm, etc.
+    datetime_utc DATETIME NOT NULL,
+    source VARCHAR(50) NOT NULL,     -- tolnet, openaq, etc.
+    latitude FLOAT,
+    longitude FLOAT,
+    raw_data TEXT,                   -- Original API response
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+);
 ```
-NASA-AQI-WEB-APP-/
-├── frontend/
-│   ├── index.html          # Main HTML with Tailwind CSS
-│   ├── style.css           # Custom styles and animations
-│   └── script.js           # Complete JavaScript logic
-├── backend/                # Backend API (coming soon)
-│   └── README.md          # Backend documentation
-├── package.json            # Node.js dependencies
-└── README.md              # This file
+
+### Weather Table
+```sql
+CREATE TABLE weather (
+    id INTEGER PRIMARY KEY,
+    city VARCHAR(100) NOT NULL,
+    temperature FLOAT,               -- Celsius
+    humidity FLOAT,                  -- Percentage
+    wind_speed FLOAT,                -- m/s
+    wind_direction FLOAT,            -- Degrees
+    precipitation FLOAT,             -- mm
+    pressure FLOAT,                  -- hPa
+    datetime_utc DATETIME NOT NULL,
+    source VARCHAR(50) NOT NULL,     -- daymet, merra2, etc.
+    latitude FLOAT,
+    longitude FLOAT,
+    raw_data TEXT,                   -- Original API response
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+);
 ```
 
-## How It Works
+## 🔧 Configuration
 
-1. **Location Detection**: The app automatically detects your current location using the browser's geolocation API
-2. **Map Display**: Shows an interactive map centered on your location (or New York as default)
-3. **Air Quality Check**: Click the "Check Air Quality" button to get predictions
-4. **Mock Data**: Currently uses mock data for testing (see backend integration below)
-5. **Visual Feedback**: Displays results with color-coded categories and map markers
-
-## Backend Integration
-
-The app is ready to connect to your backend API. To integrate:
-
-1. Open `frontend/script.js`
-2. Find the configuration section at the top (around line 8)
-3. Change `useMock` from `true` to `false`:
-
-```javascript
-const useMock = false; // Set to false when backend is ready
-```
-
-That's it! The app will automatically switch to using the real API endpoint:
-`http://localhost:8000/api/predict?lat=${lat}&lon=${lng}`
-
-The modular design handles all the complexity for you!
-
-## API Response Format
-
-The app expects the backend to return JSON in this format:
+### City Configuration
+Edit `config.json` to add or modify target cities:
 
 ```json
 {
-    "predicted_pm25": 22.5,
-    "category": "Moderate",
-    "source": "NASA Data"
+  "cities": [
+    {
+      "name": "New York",
+      "latitude": 40.7128,
+      "longitude": -74.0060,
+      "timezone": "America/New_York"
+    }
+  ],
+  "ingestion_settings": {
+    "days_back": 7,
+    "update_frequency_hours": 6,
+    "retry_attempts": 3,
+    "timeout_seconds": 30
+  }
 }
 ```
 
-## Browser Compatibility
+### Data Source Configuration
+Enable/disable data sources in `config.json`:
 
-- Chrome/Edge: Full support
-- Firefox: Full support
-- Safari: Full support
-- Mobile browsers: Full support
+```json
+{
+  "data_sources": {
+    "tolnet": {
+      "enabled": true,
+      "base_url": "https://tolnet.larc.nasa.gov/api/",
+      "parameters": ["O3_Number_Density"]
+    },
+    "openaq": {
+      "enabled": true,
+      "base_url": "https://api.openaq.org/v2/",
+      "parameters": ["NO2", "PM2.5", "PM10", "O3"]
+    },
+    "weather": {
+      "enabled": true,
+      "sources": ["daymet", "merra2"],
+      "parameters": ["temperature", "humidity", "wind_speed", "wind_direction", "precipitation"]
+    }
+  }
+}
+```
 
-## Technologies Used
+## 📊 Data Processing
 
-- **HTML5**: Semantic markup and structure
-- **Tailwind CSS**: Utility-first CSS framework
-- **CSS3**: Custom animations and glassmorphism effects
-- **JavaScript (ES6+)**: Modern JavaScript with async/await
-- **Leaflet.js**: Interactive maps with custom markers
-- **Chart.js**: Beautiful data visualization
-- **Geolocation API**: Smart location detection
-- **Notification API**: Browser notifications for alerts
-- **Fetch API**: HTTP requests with error handling
+### Unit Normalization
+All measurements are normalized to standard units:
+- **Air Quality**: µg/m³ (micrograms per cubic meter)
+- **Temperature**: Celsius
+- **Wind Speed**: m/s (meters per second)
+- **Precipitation**: mm (millimeters)
+- **Pressure**: hPa (hectopascals)
 
-## Development
+### Data Fusion
+The system merges data from multiple sources:
+- **Spatial Matching**: Finds closest city for each measurement
+- **Temporal Alignment**: Groups data by timestamp
+- **Quality Control**: Handles missing values and outliers
 
-The app is built with vanilla JavaScript, HTML, and CSS - no build process required. Simply edit the files in the `frontend/` directory and refresh your browser.
+### ML-Ready Output
+Normalized data is structured for machine learning:
+```json
+{
+  "city_name": {
+    "2024-01-01T12:00:00": {
+      "measurements": {
+        "PM2.5": {"value": 15.2, "unit": "µg/m³", "source": "openaq"},
+        "NO2": {"value": 25.8, "unit": "µg/m³", "source": "openaq"},
+        "O3": {"value": 45.3, "unit": "µg/m³", "source": "tolnet"}
+      },
+      "weather": {
+        "temperature": 22.5,
+        "humidity": 65.0,
+        "wind_speed": 3.2,
+        "wind_direction": 180.0,
+        "precipitation": 0.0,
+        "pressure": 1013.2
+      }
+    }
+  }
+}
+```
 
-## Troubleshooting
+## 🧪 Testing
 
-### Geolocation not working
-- Make sure you're using HTTPS or localhost
-- Check browser permissions for location access
-- The app will fall back to New York coordinates if geolocation fails
+Run the comprehensive test suite:
 
-### Map not loading
-- Check your internet connection (Leaflet loads tiles from OpenStreetMap)
-- Try refreshing the page
+```bash
+python test_api.py
+```
 
-### Styling issues
-- Clear your browser cache
-- Make sure all CSS files are loading properly
+The test suite covers:
+- Health checks
+- Data ingestion
+- City configuration
+- Data preview and statistics
+- Normalized data output
 
-## License
+## 📈 Monitoring
 
-MIT License - Feel free to use this code for your NASA Space Apps project!
+### Data Statistics
+Access real-time data statistics:
 
-## Contributing
+```bash
+curl http://localhost:8000/data/stats
+```
 
-This is a NASA Space Apps Challenge project. Feel free to fork and improve!
+### Health Monitoring
+Check API health and status:
+
+```bash
+curl http://localhost:8000/health
+```
+
+## 🔒 Security
+
+- **Environment Variables**: Sensitive credentials stored in `.env`
+- **Input Validation**: Pydantic models validate all inputs
+- **Error Handling**: Comprehensive error handling and logging
+- **CORS**: Configured for cross-origin requests
+
+## 🚀 Deployment
+
+### Docker Deployment
+```dockerfile
+FROM python:3.11-slim
+
+WORKDIR /app
+COPY requirements.txt .
+RUN pip install -r requirements.txt
+
+COPY . .
+EXPOSE 8000
+
+CMD ["python", "main.py"]
+```
+
+### Environment Variables
+```env
+EARTHDATA_USERNAME=your_username
+EARTHDATA_PASSWORD=your_password
+DATABASE_URL=sqlite:///./air_quality_data.db
+API_HOST=0.0.0.0
+API_PORT=8000
+LOG_LEVEL=INFO
+```
+
+## 📝 Usage Examples
+
+### Fetch Data for All Cities
+```bash
+curl "http://localhost:8000/ingest/data?days_back=7"
+```
+
+### Get Normalized Data for ML
+```bash
+curl "http://localhost:8000/data/normalized?city=New York&days_back=7"
+```
+
+### Add New City
+```bash
+curl -X POST "http://localhost:8000/config/cities" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "name": "Chicago",
+    "latitude": 41.8781,
+    "longitude": -87.6298,
+    "timezone": "America/Chicago"
+  }'
+```
+
+## 🤝 Contributing
+
+1. Fork the repository
+2. Create a feature branch
+3. Make your changes
+4. Add tests
+5. Submit a pull request
+
+## 📄 License
+
+This project is licensed under the MIT License - see the LICENSE file for details.
+
+## 🆘 Support
+
+For issues and questions:
+1. Check the API documentation at `/docs`
+2. Review the test suite in `test_api.py`
+3. Check the logs for error details
+4. Open an issue on GitHub
+
+## 🔮 Future Enhancements
+
+- [ ] Real-time WebSocket updates
+- [ ] Additional data sources (PurpleAir, AirNow)
+- [ ] Advanced data quality metrics
+- [ ] Automated data validation
+- [ ] Cloud deployment configurations
+- [ ] Machine learning model integration
