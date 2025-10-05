@@ -17,7 +17,7 @@
           crossorigin=""/>
     
     <!-- Custom CSS -->
-    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="/static/style.css">
 </head>
 <body class="bg-gradient-to-br from-blue-50 to-indigo-100 min-h-screen">
     <!-- Header -->
@@ -38,15 +38,40 @@
     <main class="container mx-auto px-4 py-8">
         <!-- Control Panel -->
         <div class="bg-white/90 backdrop-blur-sm rounded-2xl shadow-xl p-6 mb-8 border border-white/20">
-            <div class="flex flex-col md:flex-row items-center justify-between gap-4">
-                <div class="flex items-center gap-4">
+            <div class="flex flex-col lg:flex-row items-center justify-between gap-6">
+                <!-- Location Controls -->
+                <div class="flex flex-col sm:flex-row items-center gap-4">
                     <button id="useMyLocation" class="bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700 text-white px-6 py-3 rounded-xl font-semibold transition-all duration-300 transform hover:scale-105 shadow-lg flex items-center gap-2">
                         <span class="text-xl">📍</span>
                         Use My Location
                     </button>
-                    <div id="locationStatus" class="text-sm text-gray-600">
-                        Click to get your location
+                    
+                    <!-- City Selection -->
+                    <div class="flex items-center gap-2">
+                        <label for="citySelect" class="text-sm font-medium text-gray-700">Or select city:</label>
+                        <select id="citySelect" class="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                            <option value="">Loading cities...</option>
+                        </select>
                     </div>
+                </div>
+                
+                <!-- Parameter Selection -->
+                <div class="flex items-center gap-4">
+                    <label for="parameterSelect" class="text-sm font-medium text-gray-700">Parameter:</label>
+                    <select id="parameterSelect" class="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                        <option value="PM2.5">PM2.5</option>
+                        <option value="O3">O3</option>
+                        <option value="NO2">NO2</option>
+                    </select>
+                    
+                    <!-- Hours Ahead Selection -->
+                    <label for="hoursSelect" class="text-sm font-medium text-gray-700">Forecast:</label>
+                    <select id="hoursSelect" class="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                        <option value="24">24 hours</option>
+                        <option value="48">48 hours</option>
+                        <option value="72">72 hours</option>
+                        <option value="168">7 days</option>
+                    </select>
                 </div>
                 
                 <!-- Loading Spinner -->
@@ -55,15 +80,20 @@
                     <span>Fetching data...</span>
                 </div>
             </div>
+            
+            <!-- Status Display -->
+            <div id="locationStatus" class="mt-4 text-sm text-gray-600 text-center">
+                Click "Use My Location" or select a city to get started
+            </div>
         </div>
 
         <!-- Data Display Panel -->
         <div id="dataDisplay" class="hidden bg-white/90 backdrop-blur-sm rounded-2xl shadow-xl p-6 mb-8 border border-white/20">
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-                <!-- PM2.5 Value -->
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                <!-- Current Value -->
                 <div class="text-center p-4 bg-gradient-to-br from-blue-50 to-indigo-50 rounded-xl">
-                    <div class="text-3xl font-bold text-gray-800 mb-1" id="pm25Value">--</div>
-                    <div class="text-sm text-gray-600">PM2.5 (μg/m³)</div>
+                    <div class="text-3xl font-bold text-gray-800 mb-1" id="currentValue">--</div>
+                    <div class="text-sm text-gray-600" id="currentParameter">PM2.5 (μg/m³)</div>
                 </div>
                 
                 <!-- Air Quality Category -->
@@ -73,22 +103,39 @@
                     <div class="text-sm text-gray-600">Air Quality</div>
                 </div>
                 
-                <!-- Data Source -->
+                <!-- Data Sources -->
                 <div class="text-center p-4 bg-gradient-to-br from-purple-50 to-pink-50 rounded-xl">
                     <div class="text-2xl mb-2">📡</div>
-                    <div class="text-lg font-semibold text-gray-800" id="dataSource">--</div>
-                    <div class="text-sm text-gray-600">Data Source</div>
+                    <div class="text-lg font-semibold text-gray-800" id="dataSources">--</div>
+                    <div class="text-sm text-gray-600">Data Sources</div>
+                </div>
+                
+                <!-- Model Accuracy -->
+                <div class="text-center p-4 bg-gradient-to-br from-yellow-50 to-orange-50 rounded-xl">
+                    <div class="text-2xl mb-2">🎯</div>
+                    <div class="text-lg font-semibold text-gray-800" id="modelAccuracy">--</div>
+                    <div class="text-sm text-gray-600">Model Accuracy</div>
                 </div>
             </div>
         </div>
 
-        <!-- Chart Section -->
+        <!-- Forecast Chart Section -->
         <div class="bg-white/90 backdrop-blur-sm rounded-2xl shadow-xl p-6 mb-8 border border-white/20">
             <h3 class="text-xl font-semibold text-gray-800 mb-4 text-center">
-                📈 Air Quality Trends (Last 6 Hours)
+                📈 Air Quality Forecast
             </h3>
             <div class="relative h-64">
-                <canvas id="airQualityChart"></canvas>
+                <canvas id="forecastChart"></canvas>
+            </div>
+        </div>
+
+        <!-- Confidence Intervals Section -->
+        <div class="bg-white/90 backdrop-blur-sm rounded-2xl shadow-xl p-6 mb-8 border border-white/20">
+            <h3 class="text-xl font-semibold text-gray-800 mb-4 text-center">
+                📊 Prediction Confidence Intervals
+            </h3>
+            <div class="relative h-64">
+                <canvas id="confidenceChart"></canvas>
             </div>
         </div>
 
@@ -107,6 +154,9 @@
             <p class="text-gray-600">
                 &copy; 2024 NASA Space Apps Challenge - Cleaner, Safer Skies Project
             </p>
+            <p class="text-sm text-gray-500 mt-2">
+                Powered by NASA TEMPO, OpenAQ, and OpenWeatherMap data
+            </p>
         </div>
     </footer>
 
@@ -116,6 +166,6 @@
             crossorigin=""></script>
     
     <!-- Custom JavaScript -->
-    <script src="script.js"></script>
+    <script src="/static/script.js"></script>
 </body>
 </html>

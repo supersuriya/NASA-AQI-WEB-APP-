@@ -1,18 +1,24 @@
 // Cleaner, Safer Skies - NASA Air Quality Monitor
-// Complete frontend with mock data and easy backend integration
+// Enhanced frontend with real FastAPI backend integration
 
 // ============================================================================
-// CONFIGURATION - Easy toggle for mock/real API
+// CONFIGURATION
 // ============================================================================
-const useMock = true; // Set to false when backend is ready
+const API_BASE_URL = 'http://localhost:8000';
+const USE_REAL_API = true; // Set to false to use mock data for testing
 
 // ============================================================================
 // GLOBAL VARIABLES
 // ============================================================================
 let map;
 let currentLocation = null;
-let airQualityChart = null;
+let forecastChart = null;
+let confidenceChart = null;
 let notificationPermission = null;
+let availableCities = [];
+let currentCity = null;
+let currentParameter = 'PM2.5';
+let currentHoursAhead = 24;
 
 // Default location (New York City) if geolocation fails
 const DEFAULT_LOCATION = {
@@ -23,37 +29,37 @@ const DEFAULT_LOCATION = {
 // Air quality categories with colors and icons
 const AIR_QUALITY_CATEGORIES = {
     'Good': {
-        color: '#10B981', // green-500
+        color: '#10B981',
         bgColor: 'from-green-50 to-emerald-50',
         icon: '🌿',
         description: 'Air quality is satisfactory'
     },
     'Moderate': {
-        color: '#F59E0B', // yellow-500
+        color: '#F59E0B',
         bgColor: 'from-yellow-50 to-amber-50',
         icon: '😊',
         description: 'Air quality is acceptable'
     },
     'Unhealthy for Sensitive Groups': {
-        color: '#F97316', // orange-500
+        color: '#F97316',
         bgColor: 'from-orange-50 to-red-50',
         icon: '😷',
         description: 'Sensitive groups may experience health effects'
     },
     'Unhealthy': {
-        color: '#EF4444', // red-500
+        color: '#EF4444',
         bgColor: 'from-red-50 to-pink-50',
         icon: '🔥',
         description: 'Everyone may experience health effects'
     },
     'Very Unhealthy': {
-        color: '#8B5CF6', // purple-500
+        color: '#8B5CF6',
         bgColor: 'from-purple-50 to-indigo-50',
         icon: '💀',
         description: 'Health warnings of emergency conditions'
     },
     'Hazardous': {
-        color: '#7C2D12', // red-900
+        color: '#7C2D12',
         bgColor: 'from-red-100 to-red-200',
         icon: '☠️',
         description: 'Health alert: everyone may experience serious health effects'
@@ -64,27 +70,38 @@ const AIR_QUALITY_CATEGORIES = {
 // INITIALIZATION
 // ============================================================================
 document.addEventListener('DOMContentLoaded', function() {
-    console.log('Initializing Cleaner, Safer Skies...');
+    console.log('Initializing Cleaner, Safer Skies with real API...');
     initializeApp();
 });
 
 /**
  * Initialize the application
  */
-function initializeApp() {
-    // Initialize the map
-    initializeMap();
-    
-    // Set up event listeners
-    setupEventListeners();
-    
-    // Request notification permission
-    requestNotificationPermission();
-    
-    // Initialize chart with empty data
-    initializeChart();
-    
-    console.log('App initialized successfully');
+async function initializeApp() {
+    try {
+        // Initialize the map
+        initializeMap();
+        
+        // Set up event listeners
+        setupEventListeners();
+        
+        // Request notification permission
+        requestNotificationPermission();
+        
+        // Initialize charts
+        initializeCharts();
+        
+        // Load available cities from API
+        await loadAvailableCities();
+        
+        // Load available parameters for default city
+        await loadAvailableParameters();
+        
+        console.log('App initialized successfully');
+    } catch (error) {
+        console.error('Error initializing app:', error);
+        showError('Failed to initialize application. Please refresh the page.');
+    }
 }
 
 /**
@@ -108,10 +125,28 @@ function initializeMap() {
  * Set up event listeners
  */
 function setupEventListeners() {
+    // Location button
     const useMyLocationBtn = document.getElementById('useMyLocation');
-    
     if (useMyLocationBtn) {
         useMyLocationBtn.addEventListener('click', handleLocationRequest);
+    }
+    
+    // City selection
+    const citySelect = document.getElementById('citySelect');
+    if (citySelect) {
+        citySelect.addEventListener('change', handleCityChange);
+    }
+    
+    // Parameter selection
+    const parameterSelect = document.getElementById('parameterSelect');
+    if (parameterSelect) {
+        parameterSelect.addEventListener('change', handleParameterChange);
+    }
+    
+    // Hours ahead selection
+    const hoursSelect = document.getElementById('hoursSelect');
+    if (hoursSelect) {
+        hoursSelect.addEventListener('change', handleHoursChange);
     }
 }
 
@@ -127,6 +162,172 @@ async function requestNotificationPermission() {
             console.log('Notification permission error:', error);
         }
     }
+}
+
+// ============================================================================
+// API INTEGRATION
+// ============================================================================
+
+/**
+ * Load available cities from the API
+ */
+async function loadAvailableCities() {
+    try {
+        console.log('Loading available cities...');
+        const response = await fetch(`${API_BASE_URL}/cities`);
+        
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        
+        const data = await response.json();
+        availableCities = data.cities || [];
+        
+        // Populate city select dropdown
+        const citySelect = document.getElementById('citySelect');
+        citySelect.innerHTML = '<option value="">Select a city...</option>';
+        
+        availableCities.forEach(city => {
+            const option = document.createElement('option');
+            option.value = city;
+            option.textContent = city;
+            citySelect.appendChild(option);
+        });
+        
+        console.log(`Loaded ${availableCities.length} cities`);
+    } catch (error) {
+        console.error('Error loading cities:', error);
+        showError('Failed to load cities. Using default location.');
+    }
+}
+
+/**
+ * Load available parameters for a city
+ */
+async function loadAvailableParameters(city = null) {
+    if (!city) return;
+    
+    try {
+        console.log(`Loading parameters for ${city}...`);
+        const response = await fetch(`${API_BASE_URL}/parameters/${encodeURIComponent(city)}`);
+        
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        
+        const data = await response.json();
+        const parameters = data.parameters || ['PM2.5', 'O3', 'NO2'];
+        
+        // Update parameter select dropdown
+        const parameterSelect = document.getElementById('parameterSelect');
+        parameterSelect.innerHTML = '';
+        
+        parameters.forEach(param => {
+            const option = document.createElement('option');
+            option.value = param;
+            option.textContent = param;
+            parameterSelect.appendChild(option);
+        });
+        
+        // Set default parameter
+        if (parameters.includes('PM2.5')) {
+            parameterSelect.value = 'PM2.5';
+            currentParameter = 'PM2.5';
+        }
+        
+        console.log(`Loaded parameters for ${city}:`, parameters);
+    } catch (error) {
+        console.error(`Error loading parameters for ${city}:`, error);
+    }
+}
+
+/**
+ * Get air quality prediction from the API
+ */
+async function getAirQualityPrediction(city, parameter, hoursAhead) {
+    try {
+        console.log(`Getting prediction for ${city} - ${parameter} (${hoursAhead}h)`);
+        
+        const requestBody = {
+            city: city,
+            parameter: parameter,
+            hours_ahead: hoursAhead,
+            use_real_data: true
+        };
+        
+        const response = await fetch(`${API_BASE_URL}/predict`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(requestBody)
+        });
+        
+        if (!response.ok) {
+            const errorData = await response.json().catch(() => ({}));
+            throw new Error(errorData.detail || `HTTP error! status: ${response.status}`);
+        }
+        
+        const data = await response.json();
+        console.log('Prediction data received:', data);
+        
+        return data;
+    } catch (error) {
+        console.error('Error getting prediction:', error);
+        throw error;
+    }
+}
+
+/**
+ * Get mock data for testing (when API is not available)
+ */
+async function getMockAirQualityData(city, parameter, hoursAhead) {
+    // Simulate network delay
+    await new Promise(resolve => setTimeout(resolve, 1500));
+    
+    // Generate mock data
+    const seed = Math.abs(city.length + parameter.length) * 1000;
+    const random = (Math.sin(seed) + 1) / 2;
+    
+    const predictions = [];
+    const confidenceIntervals = [];
+    
+    for (let i = 1; i <= hoursAhead; i++) {
+        const baseValue = 20 + Math.random() * 30;
+        const prediction = baseValue + (Math.random() - 0.5) * 10;
+        const confidence = prediction * 0.2; // 20% confidence interval
+        
+        predictions.push({
+            hour: i,
+            timestamp: new Date(Date.now() + i * 60 * 60 * 1000).toISOString(),
+            predicted_value: Math.round(prediction * 10) / 10
+        });
+        
+        confidenceIntervals.push({
+            hour: i,
+            lower_bound: Math.round((prediction - confidence) * 10) / 10,
+            upper_bound: Math.round((prediction + confidence) * 10) / 10
+        });
+    }
+    
+    return {
+        city: city,
+        parameter: parameter,
+        hours_ahead: hoursAhead,
+        predictions: predictions,
+        confidence_intervals: confidenceIntervals,
+        model_metadata: {
+            model_type: 'RandomForestRegressor',
+            model_accuracy: 0.85,
+            real_data_enabled: false
+        },
+        data_sources: {
+            tempo: false,
+            openaq: false,
+            weather: false
+        },
+        timestamp: new Date().toISOString()
+    };
 }
 
 // ============================================================================
@@ -161,14 +362,13 @@ async function handleLocationRequest() {
             // Add location marker
             addLocationMarker();
             
-            // Get air quality data
-            await getAirQualityData(location.lat, location.lng);
+            // Find nearest city and get air quality data
+            await findNearestCityAndGetData(location);
         }
         
     } catch (error) {
         console.error('Location error:', error);
-        statusElement.textContent = 'Location access denied. Using default location.';
-        useDefaultLocation();
+        statusElement.textContent = 'Location access denied. Please select a city manually.';
     } finally {
         // Reset button
         button.disabled = false;
@@ -206,20 +406,66 @@ function getCurrentLocation() {
 }
 
 /**
- * Use default location when geolocation fails
+ * Find nearest city and get air quality data
  */
-function useDefaultLocation() {
-    console.log('Using default location (New York)');
-    currentLocation = DEFAULT_LOCATION;
+async function findNearestCityAndGetData(location) {
+    // For simplicity, we'll use a basic distance calculation
+    // In a real app, you might use a more sophisticated geocoding service
+    let nearestCity = 'New York'; // Default
+    let minDistance = Infinity;
     
-    // Update map to default location
-    map.setView([DEFAULT_LOCATION.lat, DEFAULT_LOCATION.lng], 10);
+    // Simple distance calculation (not accurate for large distances)
+    availableCities.forEach(city => {
+        // This is a simplified approach - in reality you'd need city coordinates
+        const distance = Math.random() * 1000; // Mock distance
+        if (distance < minDistance) {
+            minDistance = distance;
+            nearestCity = city;
+        }
+    });
     
-    // Add location marker
-    addLocationMarker();
+    // Set the city in the dropdown
+    const citySelect = document.getElementById('citySelect');
+    citySelect.value = nearestCity;
+    currentCity = nearestCity;
     
-    // Get air quality data for default location
-    getAirQualityData(DEFAULT_LOCATION.lat, DEFAULT_LOCATION.lng);
+    // Load parameters for this city
+    await loadAvailableParameters(nearestCity);
+    
+    // Get air quality data
+    await getAirQualityData(nearestCity, currentParameter, currentHoursAhead);
+}
+
+/**
+ * Handle city selection change
+ */
+async function handleCityChange(event) {
+    const selectedCity = event.target.value;
+    if (selectedCity) {
+        currentCity = selectedCity;
+        await loadAvailableParameters(selectedCity);
+        await getAirQualityData(selectedCity, currentParameter, currentHoursAhead);
+    }
+}
+
+/**
+ * Handle parameter selection change
+ */
+async function handleParameterChange(event) {
+    currentParameter = event.target.value;
+    if (currentCity) {
+        await getAirQualityData(currentCity, currentParameter, currentHoursAhead);
+    }
+}
+
+/**
+ * Handle hours ahead selection change
+ */
+async function handleHoursChange(event) {
+    currentHoursAhead = parseInt(event.target.value);
+    if (currentCity) {
+        await getAirQualityData(currentCity, currentParameter, currentHoursAhead);
+    }
 }
 
 /**
@@ -261,13 +507,10 @@ function addLocationMarker() {
 // ============================================================================
 
 /**
- * Get air quality data for given coordinates
- * @param {number} lat - Latitude
- * @param {number} lng - Longitude
- * @param {boolean} useMock - Whether to use mock data or real API
+ * Get air quality data for given parameters
  */
-async function getAirQualityData(lat, lng, useMockData = useMock) {
-    console.log(`Getting air quality data for lat: ${lat}, lng: ${lng}, useMock: ${useMockData}`);
+async function getAirQualityData(city, parameter, hoursAhead) {
+    console.log(`Getting air quality data for ${city} - ${parameter} (${hoursAhead}h)`);
     
     // Show loading state
     showLoadingState(true);
@@ -275,19 +518,20 @@ async function getAirQualityData(lat, lng, useMockData = useMock) {
     try {
         let data;
         
-        if (useMockData) {
-            // Use mock data
-            data = await getMockAirQualityData(lat, lng);
-        } else {
+        if (USE_REAL_API) {
             // Use real API
-            data = await getRealAirQualityData(lat, lng);
+            data = await getAirQualityPrediction(city, parameter, hoursAhead);
+        } else {
+            // Use mock data
+            data = await getMockAirQualityData(city, parameter, hoursAhead);
         }
         
         // Display the results
         displayAirQualityResults(data);
         
-        // Update chart with new data
-        updateChart(data);
+        // Update charts with new data
+        updateForecastChart(data);
+        updateConfidenceChart(data);
         
         // Check for notifications
         checkForNotifications(data);
@@ -296,60 +540,10 @@ async function getAirQualityData(lat, lng, useMockData = useMock) {
         
     } catch (error) {
         console.error('Error getting air quality data:', error);
-        showError('Failed to get air quality data. Please try again.');
+        showError(`Failed to get air quality data: ${error.message}`);
     } finally {
         // Hide loading state
         showLoadingState(false);
-    }
-}
-
-/**
- * Get mock air quality data
- * @param {number} lat - Latitude
- * @param {number} lng - Longitude
- */
-async function getMockAirQualityData(lat, lng) {
-    // Simulate network delay
-    await new Promise(resolve => setTimeout(resolve, 1500));
-    
-    // Generate mock data based on coordinates for variety
-    const seed = Math.abs(lat + lng) * 1000;
-    const random = (Math.sin(seed) + 1) / 2; // Normalize to 0-1
-    
-    const pm25Values = [8, 15, 22.5, 35, 45, 55, 65, 85];
-    const categories = Object.keys(AIR_QUALITY_CATEGORIES);
-    
-    const pm25 = pm25Values[Math.floor(random * pm25Values.length)];
-    const category = categories[Math.floor(random * categories.length)];
-    
-    return {
-        predicted_pm25: pm25,
-        category: category,
-        source: 'Mock Data'
-    };
-}
-
-/**
- * Get real air quality data from API
- * @param {number} lat - Latitude
- * @param {number} lng - Longitude
- */
-async function getRealAirQualityData(lat, lng) {
-    const apiUrl = `http://localhost:8000/api/predict?lat=${lat}&lon=${lng}`;
-    
-    try {
-        const response = await fetch(apiUrl);
-        
-        if (!response.ok) {
-            throw new Error(`HTTP error! status: ${response.status}`);
-        }
-        
-        const data = await response.json();
-        return data;
-        
-    } catch (error) {
-        console.error('API call failed:', error);
-        throw error;
     }
 }
 
@@ -359,22 +553,51 @@ async function getRealAirQualityData(lat, lng) {
 
 /**
  * Display air quality results in the UI
- * @param {Object} data - Air quality data
  */
 function displayAirQualityResults(data) {
     console.log('Displaying air quality results:', data);
     
-    // Update PM2.5 value
-    document.getElementById('pm25Value').textContent = data.predicted_pm25;
+    // Get current prediction (first hour)
+    const currentPrediction = data.predictions[0];
+    const currentValue = currentPrediction.value; // Changed from predicted_value to value
     
-    // Update category
-    document.getElementById('airQualityCategory').textContent = data.category;
+    // Update current value
+    document.getElementById('currentValue').textContent = currentValue.toFixed(1);
     
-    // Update data source
-    document.getElementById('dataSource').textContent = data.source;
+    // Update parameter display
+    const unit = data.parameter === 'PM2.5' ? 'μg/m³' : 'ppb';
+    document.getElementById('currentParameter').textContent = `${data.parameter} (${unit})`;
+    
+    // Determine air quality category
+    const category = getAirQualityCategory(data.parameter, currentValue);
+    document.getElementById('airQualityCategory').textContent = category;
+    
+    // Update data sources
+    const sources = [];
+    // Since we're using sample data, show the data source from model_metadata
+    if (data.model_metadata && data.model_metadata.data_source) {
+        sources.push(data.model_metadata.data_source);
+    } else {
+        sources.push('Sample Data');
+    }
+    
+    document.getElementById('dataSources').textContent = sources.join(', ');
+    
+    // Update model accuracy
+    const accuracy = data.model_metadata && data.model_metadata.accuracy;
+    if (accuracy && accuracy !== 'N/A - Sample Data') {
+        // If accuracy is a number, convert to percentage
+        if (typeof accuracy === 'number') {
+            document.getElementById('modelAccuracy').textContent = `${(accuracy * 100).toFixed(1)}%`;
+        } else {
+            document.getElementById('modelAccuracy').textContent = accuracy;
+        }
+    } else {
+        document.getElementById('modelAccuracy').textContent = 'N/A';
+    }
     
     // Update category styling
-    updateCategoryStyling(data.category);
+    updateCategoryStyling(category);
     
     // Show the data display panel
     const display = document.getElementById('dataDisplay');
@@ -385,8 +608,36 @@ function displayAirQualityResults(data) {
 }
 
 /**
+ * Get air quality category based on parameter and value
+ */
+function getAirQualityCategory(parameter, value) {
+    if (parameter === 'PM2.5') {
+        if (value <= 12) return 'Good';
+        if (value <= 35.4) return 'Moderate';
+        if (value <= 55.4) return 'Unhealthy for Sensitive Groups';
+        if (value <= 150.4) return 'Unhealthy';
+        if (value <= 250.4) return 'Very Unhealthy';
+        return 'Hazardous';
+    } else if (parameter === 'O3') {
+        if (value <= 54) return 'Good';
+        if (value <= 70) return 'Moderate';
+        if (value <= 85) return 'Unhealthy for Sensitive Groups';
+        if (value <= 105) return 'Unhealthy';
+        if (value <= 200) return 'Very Unhealthy';
+        return 'Hazardous';
+    } else if (parameter === 'NO2') {
+        if (value <= 53) return 'Good';
+        if (value <= 100) return 'Moderate';
+        if (value <= 360) return 'Unhealthy for Sensitive Groups';
+        if (value <= 649) return 'Unhealthy';
+        if (value <= 1249) return 'Very Unhealthy';
+        return 'Hazardous';
+    }
+    return 'Unknown';
+}
+
+/**
  * Update category styling based on air quality
- * @param {string} category - Air quality category
  */
 function updateCategoryStyling(category) {
     const categoryCard = document.getElementById('categoryCard');
@@ -405,7 +656,6 @@ function updateCategoryStyling(category) {
 
 /**
  * Show/hide loading state
- * @param {boolean} show - Whether to show loading state
  */
 function showLoadingState(show) {
     const spinner = document.getElementById('loadingSpinner');
@@ -419,17 +669,16 @@ function showLoadingState(show) {
 
 /**
  * Show error message
- * @param {string} message - Error message to display
  */
 function showError(message) {
     const statusElement = document.getElementById('locationStatus');
     statusElement.textContent = message;
-    statusElement.className = 'text-sm text-red-600';
+    statusElement.className = 'mt-4 text-sm text-red-600 text-center';
     
     // Reset after 5 seconds
     setTimeout(() => {
-        statusElement.className = 'text-sm text-gray-600';
-        statusElement.textContent = 'Click to get your location';
+        statusElement.className = 'mt-4 text-sm text-gray-600 text-center';
+        statusElement.textContent = 'Click "Use My Location" or select a city to get started';
     }, 5000);
 }
 
@@ -438,18 +687,18 @@ function showError(message) {
 // ============================================================================
 
 /**
- * Initialize the air quality chart
+ * Initialize the charts
  */
-function initializeChart() {
-    const ctx = document.getElementById('airQualityChart').getContext('2d');
-    
-    airQualityChart = new Chart(ctx, {
+function initializeCharts() {
+    // Initialize forecast chart
+    const forecastCtx = document.getElementById('forecastChart').getContext('2d');
+    forecastChart = new Chart(forecastCtx, {
         type: 'line',
         data: {
-            labels: generateTimeLabels(),
+            labels: [],
             datasets: [{
-                label: 'PM2.5 (μg/m³)',
-                data: generateMockHistoricalData(),
+                label: 'Predicted Value',
+                data: [],
                 borderColor: '#3B82F6',
                 backgroundColor: 'rgba(59, 130, 246, 0.1)',
                 borderWidth: 3,
@@ -466,7 +715,7 @@ function initializeChart() {
             maintainAspectRatio: false,
             plugins: {
                 legend: {
-                    display: false
+                    display: true
                 }
             },
             scales: {
@@ -487,10 +736,71 @@ function initializeChart() {
                         color: '#6B7280'
                     }
                 }
+            }
+        }
+    });
+    
+    // Initialize confidence chart
+    const confidenceCtx = document.getElementById('confidenceChart').getContext('2d');
+    confidenceChart = new Chart(confidenceCtx, {
+        type: 'line',
+        data: {
+            labels: [],
+            datasets: [{
+                label: 'Upper Bound',
+                data: [],
+                borderColor: '#EF4444',
+                backgroundColor: 'rgba(239, 68, 68, 0.1)',
+                borderWidth: 2,
+                fill: false,
+                tension: 0.4
+            }, {
+                label: 'Predicted Value',
+                data: [],
+                borderColor: '#3B82F6',
+                backgroundColor: 'rgba(59, 130, 246, 0.1)',
+                borderWidth: 3,
+                fill: false,
+                tension: 0.4,
+                pointBackgroundColor: '#3B82F6',
+                pointBorderColor: '#ffffff',
+                pointBorderWidth: 2,
+                pointRadius: 6
+            }, {
+                label: 'Lower Bound',
+                data: [],
+                borderColor: '#10B981',
+                backgroundColor: 'rgba(16, 185, 129, 0.1)',
+                borderWidth: 2,
+                fill: false,
+                tension: 0.4
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    display: true
+                }
             },
-            elements: {
-                point: {
-                    hoverRadius: 8
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    grid: {
+                        color: 'rgba(0, 0, 0, 0.1)'
+                    },
+                    ticks: {
+                        color: '#6B7280'
+                    }
+                },
+                x: {
+                    grid: {
+                        color: 'rgba(0, 0, 0, 0.1)'
+                    },
+                    ticks: {
+                        color: '#6B7280'
+                    }
                 }
             }
         }
@@ -498,56 +808,54 @@ function initializeChart() {
 }
 
 /**
- * Generate time labels for the last 6 hours
+ * Update forecast chart with new data
  */
-function generateTimeLabels() {
-    const labels = [];
-    const now = new Date();
+function updateForecastChart(data) {
+    if (!forecastChart) return;
     
-    for (let i = 5; i >= 0; i--) {
-        const time = new Date(now.getTime() - (i * 60 * 60 * 1000));
-        labels.push(time.toLocaleTimeString('en-US', { 
+    const labels = data.predictions.map(p => {
+        const date = new Date(p.timestamp);
+        return date.toLocaleTimeString('en-US', { 
             hour: '2-digit', 
             minute: '2-digit',
             hour12: true 
-        }));
-    }
+        });
+    });
     
-    return labels;
+    const values = data.predictions.map(p => p.value);
+    
+    forecastChart.data.labels = labels;
+    forecastChart.data.datasets[0].data = values;
+    forecastChart.data.datasets[0].label = `${data.parameter} (${data.parameter === 'PM2.5' ? 'μg/m³' : 'ppb'})`;
+    
+    forecastChart.update('active');
 }
 
 /**
- * Generate mock historical data for the last 6 hours
+ * Update confidence chart with new data
  */
-function generateMockHistoricalData() {
-    const data = [];
-    const baseValue = 20 + Math.random() * 30; // Base value between 20-50
+function updateConfidenceChart(data) {
+    if (!confidenceChart) return;
     
-    for (let i = 0; i < 6; i++) {
-        // Add some variation to make it look realistic
-        const variation = (Math.random() - 0.5) * 10;
-        const value = Math.max(5, baseValue + variation);
-        data.push(Math.round(value * 10) / 10);
-    }
+    const labels = data.predictions.map(p => {
+        const date = new Date(p.timestamp);
+        return date.toLocaleTimeString('en-US', { 
+            hour: '2-digit', 
+            minute: '2-digit',
+            hour12: true 
+        });
+    });
     
-    return data;
-}
-
-/**
- * Update chart with new data
- * @param {Object} data - New air quality data
- */
-function updateChart(data) {
-    if (!airQualityChart) return;
+    const upperBounds = data.confidence_intervals.map(c => c.upper);
+    const lowerBounds = data.confidence_intervals.map(c => c.lower);
+    const values = data.predictions.map(p => p.value);
     
-    // Add new data point
-    const newData = [...airQualityChart.data.datasets[0].data];
-    newData.shift(); // Remove oldest point
-    newData.push(data.predicted_pm25); // Add new point
+    confidenceChart.data.labels = labels;
+    confidenceChart.data.datasets[0].data = upperBounds; // Upper bound
+    confidenceChart.data.datasets[1].data = values; // Predicted value
+    confidenceChart.data.datasets[2].data = lowerBounds; // Lower bound
     
-    // Update chart
-    airQualityChart.data.datasets[0].data = newData;
-    airQualityChart.update('active');
+    confidenceChart.update('active');
 }
 
 // ============================================================================
@@ -556,24 +864,25 @@ function updateChart(data) {
 
 /**
  * Check for notifications based on air quality
- * @param {Object} data - Air quality data
  */
 function checkForNotifications(data) {
+    const currentValue = data.predictions[0].value;
+    const category = getAirQualityCategory(data.parameter, currentValue);
     const unhealthyCategories = ['Unhealthy', 'Very Unhealthy', 'Hazardous'];
     
-    if (unhealthyCategories.includes(data.category) && notificationPermission === 'granted') {
-        showAirQualityNotification(data);
+    if (unhealthyCategories.includes(category) && notificationPermission === 'granted') {
+        showAirQualityNotification(data, category, currentValue);
     }
 }
 
 /**
  * Show air quality notification
- * @param {Object} data - Air quality data
  */
-function showAirQualityNotification(data) {
+function showAirQualityNotification(data, category, value) {
+    const unit = data.parameter === 'PM2.5' ? 'μg/m³' : 'ppb';
     const notification = new Notification('⚠️ Air Quality Alert', {
-        body: `Air quality is ${data.category.toLowerCase()} in your area! PM2.5: ${data.predicted_pm25} μg/m³. Limit outdoor activity.`,
-        icon: '/favicon.ico', // You can add a custom icon
+        body: `Air quality is ${category.toLowerCase()} in ${data.city}! ${data.parameter}: ${value.toFixed(1)} ${unit}. Limit outdoor activity.`,
+        icon: '/favicon.ico',
         tag: 'air-quality-alert'
     });
     
@@ -595,8 +904,6 @@ function showAirQualityNotification(data) {
 
 /**
  * Get category color
- * @param {string} category - Air quality category
- * @returns {string} Color hex code
  */
 function getCategoryColor(category) {
     return AIR_QUALITY_CATEGORIES[category]?.color || '#6B7280';
@@ -604,8 +911,6 @@ function getCategoryColor(category) {
 
 /**
  * Get category icon
- * @param {string} category - Air quality category
- * @returns {string} Emoji icon
  */
 function getCategoryIcon(category) {
     return AIR_QUALITY_CATEGORIES[category]?.icon || '❓';
@@ -614,8 +919,9 @@ function getCategoryIcon(category) {
 // Export functions for testing (if needed)
 if (typeof module !== 'undefined' && module.exports) {
     module.exports = {
+        getAirQualityPrediction,
         getMockAirQualityData,
         AIR_QUALITY_CATEGORIES,
-        generateMockHistoricalData
+        getAirQualityCategory
     };
 }

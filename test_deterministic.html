@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Deterministic Prediction Test</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .test-result { margin: 10px 0; padding: 10px; border: 1px solid #ccc; }
+        .success { background-color: #d4edda; border-color: #c3e6cb; }
+        .error { background-color: #f8d7da; border-color: #f5c6cb; }
+        button { padding: 10px 20px; margin: 5px; }
+    </style>
+</head>
+<body>
+    <h1>NASA Air Quality API - Deterministic Prediction Test</h1>
+    
+    <div>
+        <button onclick="testDeterministic()">Test Deterministic Predictions</button>
+        <button onclick="testCaching()">Test Caching</button>
+        <button onclick="testDifferentCities()">Test Different Cities</button>
+    </div>
+    
+    <div id="results"></div>
+    
+    <script>
+        const API_BASE_URL = 'http://localhost:8000';
+        
+        async function makePrediction(city, parameter, hours_ahead) {
+            const response = await fetch(`${API_BASE_URL}/predict`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    city: city,
+                    parameter: parameter,
+                    hours_ahead: hours_ahead
+                })
+            });
+            
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+            
+            return await response.json();
+        }
+        
+        function addResult(message, isSuccess = true) {
+            const div = document.createElement('div');
+            div.className = `test-result ${isSuccess ? 'success' : 'error'}`;
+            div.innerHTML = message;
+            document.getElementById('results').appendChild(div);
+        }
+        
+        async function testDeterministic() {
+            addResult('<h3>Testing Deterministic Predictions</h3>');
+            
+            try {
+                // Make the same request twice
+                const result1 = await makePrediction('Austin', 'PM2.5', 24);
+                const result2 = await makePrediction('Austin', 'PM2.5', 24);
+                
+                const firstPred1 = result1.predictions[0].value;
+                const firstPred2 = result2.predictions[0].value;
+                const seed1 = result1.model_metadata.seed;
+                const seed2 = result2.model_metadata.seed;
+                
+                if (firstPred1 === firstPred2 && seed1 === seed2) {
+                    addResult(`✅ SUCCESS: Predictions are deterministic!<br>
+                        First prediction: ${firstPred1}<br>
+                        Seed: ${seed1}<br>
+                        Both requests returned identical results.`);
+                } else {
+                    addResult(`❌ FAILED: Predictions are not deterministic!<br>
+                        First prediction 1: ${firstPred1}<br>
+                        First prediction 2: ${firstPred2}<br>
+                        Seed 1: ${seed1}<br>
+                        Seed 2: ${seed2}`, false);
+                }
+            } catch (error) {
+                addResult(`❌ ERROR: ${error.message}`, false);
+            }
+        }
+        
+        async function testCaching() {
+            addResult('<h3>Testing Caching</h3>');
+            
+            try {
+                const startTime = Date.now();
+                const result1 = await makePrediction('Chicago', 'O3', 24);
+                const time1 = Date.now() - startTime;
+                
+                const startTime2 = Date.now();
+                const result2 = await makePrediction('Chicago', 'O3', 24);
+                const time2 = Date.now() - startTime2;
+                
+                const firstPred1 = result1.predictions[0].value;
+                const firstPred2 = result2.predictions[0].value;
+                
+                if (firstPred1 === firstPred2) {
+                    addResult(`✅ SUCCESS: Caching is working!<br>
+                        First prediction: ${firstPred1}<br>
+                        Time 1: ${time1}ms<br>
+                        Time 2: ${time2}ms<br>
+                        Second request was ${time2 < time1 ? 'faster' : 'same speed'} (cached).`);
+                } else {
+                    addResult(`❌ FAILED: Caching not working properly!<br>
+                        First prediction 1: ${firstPred1}<br>
+                        First prediction 2: ${firstPred2}`, false);
+                }
+            } catch (error) {
+                addResult(`❌ ERROR: ${error.message}`, false);
+            }
+        }
+        
+        async function testDifferentCities() {
+            addResult('<h3>Testing Different Cities</h3>');
+            
+            try {
+                const cities = ['Austin', 'New York', 'Los Angeles'];
+                const results = {};
+                
+                for (const city of cities) {
+                    const result = await makePrediction(city, 'PM2.5', 24);
+                    results[city] = {
+                        firstPred: result.predictions[0].value,
+                        seed: result.model_metadata.seed
+                    };
+                }
+                
+                let message = '✅ SUCCESS: Different cities produce different predictions:<br>';
+                for (const [city, data] of Object.entries(results)) {
+                    message += `${city}: ${data.firstPred} (seed: ${data.seed})<br>`;
+                }
+                
+                addResult(message);
+            } catch (error) {
+                addResult(`❌ ERROR: ${error.message}`, false);
+            }
+        }
+    </script>
+</body>
+</html>

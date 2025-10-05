@@ -29,6 +29,7 @@ class AirQualityForecaster:
         self.model = None
         self.feature_columns = []
         self.is_trained = False
+        self.random_state = 42  # Fixed random state for deterministic results
         
         # Create models directory if it doesn't exist
         os.makedirs(model_path, exist_ok=True)
@@ -107,7 +108,7 @@ class AirQualityForecaster:
         
         # Split data
         X_train, X_test, y_train, y_test = train_test_split(
-            X, y, test_size=0.2, random_state=42, shuffle=False
+            X, y, test_size=0.2, random_state=self.random_state, shuffle=False
         )
         
         # Train model
@@ -116,7 +117,7 @@ class AirQualityForecaster:
             max_depth=10,
             min_samples_split=5,
             min_samples_leaf=2,
-            random_state=42,
+            random_state=self.random_state,
             n_jobs=-1
         )
         
